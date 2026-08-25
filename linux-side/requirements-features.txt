@@ -1,0 +1,18 @@
+# Optional, for agent-side work that happens in WSL rather than on Windows.
+#     pip install -r requirements-features.txt --break-system-packages
+
+# -- Analysing the journal / building indicators from fetched candles ------
+pandas>=2.2.0
+numpy>=1.26.0
+ta>=0.11.0
+
+# -- Posting alerts and daily threads to Discord --------------------------
+discord-webhook>=1.3.0
+tenacity>=8.2.0
+
+# -- Scheduling around market sessions ------------------------------------
+APScheduler>=3.10.0
+python-dateutil>=2.9.0
+
+# -- Nicer CLI output when a human is watching ----------------------------
+rich>=13.7.0

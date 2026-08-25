@@ -1,0 +1,15 @@
+# Core runtime for the WSL side. Deliberately tiny -- as of 2026-08-23,
+# empty: transport.py now uses stdlib urllib.request instead of requests.
+# `requests` was removed after measuring its import chain
+# (requests -> urllib3 -> charset_normalizer) at ~150ms on every single
+# mt5_cli.py invocation. Since this client runs as a fresh subprocess per
+# call (see mt5_cli.py's docstring: "built for an LLM agent's shell/exec
+# tool"), requests' main advantage -- connection pooling across requests
+# in the same process -- provided zero actual benefit here, while its
+# import cost dominated the entire latency budget of a single health/
+# tick/preview check.
+#
+# Nothing to install for normal use. If you add a new dependency here,
+# first check whether it's really needed on every CLI invocation, or only
+# for a rarely-used path (in which case, consider a deferred/local
+# import instead of adding it to this always-imported list).
