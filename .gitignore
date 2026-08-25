@@ -1,0 +1,83 @@
+# --- Secrets: the most important section in this file ---------------------
+# Every .env variant, wherever it lives (windows-side, linux-side, or the
+# repo root). Real credentials (broker login, bridge API key) belong ONLY
+# in a local .env that is never committed - only the .env.example templates
+# should ever be tracked by git. Broader than a bare ".env" on purpose:
+# catches habits like .env.local / .env.backup / .env.production too.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# --- Byte-compiled / optimized / DLL files ---------------------------------
+__pycache__/
+*.py[codz]
+*$py.class
+
+# --- C extensions -----------------------------------------------------------
+*.so
+
+# --- Distribution / packaging ------------------------------------------------
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Test / coverage / type-checker caches -----------------------------------
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+cover/
+
+# --- Runtime data (never meant to be tracked, even locally) -----------------
+# The journal database and bridge log are per-machine operational data, not
+# source - and the journal in particular can contain trade history. Covers
+# any filename (MT5_JOURNAL_DB is user-configurable), not just the default,
+# plus SQLite's own WAL-mode auxiliary files.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.log
+
+# --- Editor / OS --------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
