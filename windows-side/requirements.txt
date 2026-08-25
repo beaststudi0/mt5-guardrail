@@ -1,0 +1,8 @@
+# Core runtime. This is all the bridge needs to trade today.
+# Install with:  pip install -r requirements.txt
+
+MetaTrader5>=5.0.45      # Windows-only: talks to the terminal via COM/DLL
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0 # typed .env loading, fails fast on bad config

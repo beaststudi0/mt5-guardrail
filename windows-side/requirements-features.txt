@@ -1,0 +1,42 @@
+# Optional packages for the four planned features.
+# Install only the section you actually need:
+#     pip install -r requirements-features.txt
+#
+# Nothing here is imported by the core bridge. It stays installable and
+# startable even if this whole file is skipped.
+
+# -- Feature 1: Trade journal + learning from past mistakes ----------------
+# The journal itself uses stdlib sqlite3 and needs nothing extra.
+# These are for *analysing* it.
+pandas>=2.2.0            # load the journal into a DataFrame
+numpy>=1.26.0
+scikit-learn>=1.4.0      # cluster losing setups, fit simple models
+joblib>=1.3.0            # persist a fitted model between runs
+SQLAlchemy>=2.0.0        # if/when you outgrow sqlite and move to Postgres
+alembic>=1.13.0          # schema migrations for that move
+
+# -- Feature 2: Technical analysis (indicators) ---------------------------
+# `ta` is pure Python and works with numpy 2.x.
+# `pandas-ta` has more indicators but has known numpy 2.x incompatibilities;
+# pin numpy<2 if you choose it. Start with `ta`.
+ta>=0.11.0
+scipy>=1.12.0            # peak/trough detection, smoothing
+
+# -- Feature 3: Backtesting -----------------------------------------------
+backtesting>=0.3.3       # event-driven, small API, good for single-symbol work
+matplotlib>=3.8.0        # backtesting.py renders its report through this
+plotly>=5.20.0           # interactive equity curves, optional
+
+# -- Feature 4: Discord / webhook alerts ----------------------------------
+discord-webhook>=1.3.0   # fire-and-forget alerts to a channel
+httpx>=0.27.0            # generic async webhook client
+tenacity>=8.2.0          # retry alert delivery without hand-rolling backoff
+
+# -- Cross-cutting, useful for all four -----------------------------------
+APScheduler>=3.10.0      # "post the daily thread before the US open"
+python-dateutil>=2.9.0   # DST-aware market-session maths
+pytz>=2024.1
+structlog>=24.1.0        # structured logs that a bot can actually parse
+prometheus-client>=0.20.0  # expose /metrics if you graph the bridge
+typer>=0.12.0            # build a `mt5ctl` CLI on top of the service layer
+rich>=13.7.0             # readable tables in that CLI

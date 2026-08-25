@@ -1,0 +1,25 @@
+[project]
+name = "mt5-bridge"
+version = "2.0.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 96
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RET", "ARG", "PL"]
+ignore = ["PLR0913"]  # trading services legitimately take many collaborators
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+# The real MetaTrader5 package ships no type stubs.
+[[tool.mypy.overrides]]
+module = "MetaTrader5"
+ignore_missing_imports = true
