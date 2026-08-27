@@ -78,6 +78,7 @@ def trading(settings: Settings, terminal: MT5Terminal) -> TradingService:
         confirm_token_ttl=settings.confirm_token_ttl,
         deviation=settings.order_deviation,
         magic_number=settings.magic_number,
+        require_demo_account=settings.require_demo_account,
     )
 
 

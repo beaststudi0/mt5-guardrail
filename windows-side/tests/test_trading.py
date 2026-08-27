@@ -15,6 +15,7 @@ from mt5_bridge.exceptions import (
     ConfirmTokenInvalid,
     DailyLimitReached,
     InvalidStopLevels,
+    LiveAccountTradingBlocked,
     OrderRejected,
     PositionNotFound,
     ScaleInCooldownActive,
@@ -43,6 +44,7 @@ def build_service(
     require_confirm_token: bool = True,
     confirm_token_ttl: int = 60,
     cooldown_seconds: int = 900,
+    require_demo_account: bool = True,
 ) -> tuple[TradingService, RecordingJournal]:
     terminal = MT5Terminal(fake_mt5, login=1, password="pw", server="Fake", sleep=lambda _: None)
     recorded = journal if journal is not None else RecordingJournal()
@@ -58,6 +60,7 @@ def build_service(
         confirm_token_ttl=confirm_token_ttl,
         deviation=20,
         magic_number=123456,
+        require_demo_account=require_demo_account,
     )
     return service, recorded
 
@@ -270,7 +273,14 @@ class TestExecute:
         self, fake_mt5: FakeMT5
     ) -> None:
         fake_mt5.trade_mode = 2  # real
-        service, journal = build_service(fake_mt5, cooldown_seconds=900)
+        # require_demo_account=False: this test is specifically about the
+        # scale-in guard's live-account behavior, which only matters once
+        # live trading has been deliberately opted into. Without this, the
+        # newer require_demo_account guard would raise first and this test
+        # would never actually reach the scale-in check it's testing.
+        service, journal = build_service(
+            fake_mt5, cooldown_seconds=900, require_demo_account=False
+        )
         fake_mt5.positions.append(_existing_position(seconds_ago=60))  # well within 900s
 
         token = self._valid_token(service)
@@ -284,7 +294,9 @@ class TestExecute:
         self, fake_mt5: FakeMT5
     ) -> None:
         fake_mt5.trade_mode = 2  # real
-        service, _ = build_service(fake_mt5, cooldown_seconds=900)
+        service, _ = build_service(
+            fake_mt5, cooldown_seconds=900, require_demo_account=False
+        )
         fake_mt5.positions.append(_existing_position(seconds_ago=901))  # just past cooldown
 
         token = self._valid_token(service)
@@ -295,7 +307,7 @@ class TestExecute:
         self, fake_mt5: FakeMT5
     ) -> None:
         fake_mt5.trade_mode = 2  # real
-        service, _ = build_service(fake_mt5)
+        service, _ = build_service(fake_mt5, require_demo_account=False)
         other_symbol_position = _existing_position(seconds_ago=1)
         other_symbol_position.symbol = "EURUSD"
         fake_mt5.positions.append(other_symbol_position)
@@ -303,6 +315,79 @@ class TestExecute:
         token = self._valid_token(service)
         result = service.execute(execute_request(confirm_token=token))  # must not raise
         assert result.retcode == fake_mt5.TRADE_RETCODE_DONE
+
+
+class TestRequireDemoAccount:
+    """MT5_REQUIRE_DEMO_ACCOUNT (default true): execute() must refuse to
+    open a new position on a live account unless explicitly opted out.
+    close() must never be affected by this - see LiveAccountTradingBlocked's
+    docstring and the comment at the top of TradingService.close for why.
+    """
+
+    def test_live_account_execute_is_blocked_by_default(self, fake_mt5: FakeMT5) -> None:
+        fake_mt5.trade_mode = 2  # real
+        service, _ = build_service(fake_mt5)  # require_demo_account defaults to True
+        token = service.preview(buy_intent()).confirm_token
+
+        with pytest.raises(LiveAccountTradingBlocked):
+            service.execute(execute_request(confirm_token=token))
+        assert fake_mt5.sent_orders == []
+
+    def test_blocked_live_execute_does_not_journal_or_consume_quota(
+        self, fake_mt5: FakeMT5
+    ) -> None:
+        """Same discipline the confirm-token/quota-ordering tests above
+        prove for other early rejections: this one must not cost anything
+        real either -- checked before token redemption and quota, same as
+        symbol/volume validation."""
+        fake_mt5.trade_mode = 2  # real
+        service, journal = build_service(fake_mt5, max_daily_orders=1)
+        token = service.preview(buy_intent()).confirm_token
+
+        with pytest.raises(LiveAccountTradingBlocked):
+            service.execute(execute_request(confirm_token=token))
+
+        assert service._limiter.remaining() == 1  # quota untouched
+        assert not any(e.event in ("executed", "rejected") for e in journal.entries)
+
+    def test_demo_account_execute_is_allowed_by_default(self, fake_mt5: FakeMT5) -> None:
+        fake_mt5.trade_mode = 0  # demo
+        service, _ = build_service(fake_mt5)
+        token = service.preview(buy_intent()).confirm_token
+
+        result = service.execute(execute_request(confirm_token=token))  # must not raise
+        assert result.retcode == fake_mt5.TRADE_RETCODE_DONE
+
+    def test_live_account_execute_is_allowed_when_explicitly_opted_out(
+        self, fake_mt5: FakeMT5
+    ) -> None:
+        fake_mt5.trade_mode = 2  # real
+        service, _ = build_service(fake_mt5, require_demo_account=False)
+        token = service.preview(buy_intent()).confirm_token
+
+        result = service.execute(execute_request(confirm_token=token))  # must not raise
+        assert result.retcode == fake_mt5.TRADE_RETCODE_DONE
+
+    def test_close_on_a_live_account_is_never_blocked(self, fake_mt5: FakeMT5) -> None:
+        """The entire point of exempting close(): a live position must
+        stay closeable through this bridge even with the default
+        require_demo_account=True -- refusing to close would strand it
+        in the market instead of protecting anything."""
+        fake_mt5.trade_mode = 2  # real
+        fake_mt5.positions.append(_existing_position(seconds_ago=0))
+        service, _ = build_service(fake_mt5, require_confirm_token=False)
+
+        result = service.close(fake_mt5.positions[0].ticket, confirm_token=None)  # must not raise
+        assert result.closed_ticket == fake_mt5.positions[0].ticket
+
+    def test_preview_on_a_live_account_is_never_blocked(self, fake_mt5: FakeMT5) -> None:
+        """preview() is read-only and never sends an order, so it isn't
+        gated by require_demo_account either -- only execute() is."""
+        fake_mt5.trade_mode = 2  # real
+        service, _ = build_service(fake_mt5)
+
+        preview = service.preview(buy_intent())  # must not raise
+        assert preview.confirm_token
 
 
 # --------------------------------------------------------------------------
