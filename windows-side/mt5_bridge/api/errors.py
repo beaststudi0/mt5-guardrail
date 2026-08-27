@@ -17,6 +17,7 @@ from ..exceptions import (
     ConfirmTokenInvalid,
     DailyLimitReached,
     InvalidStopLevels,
+    LiveAccountTradingBlocked,
     OrderRejected,
     PositionNotFound,
     ScaleInCooldownActive,
@@ -31,6 +32,7 @@ log = logging.getLogger(__name__)
 
 _STATUS_BY_ERROR: dict[type[BridgeError], HTTPStatus] = {
     SymbolNotAllowed: HTTPStatus.FORBIDDEN,
+    LiveAccountTradingBlocked: HTTPStatus.FORBIDDEN,
     SymbolUnavailable: HTTPStatus.NOT_FOUND,
     PositionNotFound: HTTPStatus.NOT_FOUND,
     VolumeOutOfRange: HTTPStatus.UNPROCESSABLE_ENTITY,
