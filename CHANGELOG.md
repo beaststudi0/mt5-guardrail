@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Full automated test suite for `windows-side` covering the trading
   service, guards, terminal connection handling, the HTTP API layer, and
-  a real client-to-server end-to-end path — 120 tests total across both
+  a real client-to-server end-to-end path — 126 tests total across both
   `windows-side` and `linux-side`, run against a fake MT5 terminal and a
   local stub HTTP server (no real broker or network access required).
   In particular, `trading.py` — the module that actually places, closes,
@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   60-second window now trigger a temporary 30-second lockout (with a
   `Retry-After` header on the `429` response), independent of how strong
   the configured key is. See `guards.py` and `SECURITY.md`.
+- `MT5_REQUIRE_DEMO_ACCOUNT` (default `true`): `execute` now refuses to
+  open a new position unless the connected MT5 account reports
+  `trade_mode == 0` (demo) — a freshly cloned copy of this project can no
+  longer trade a live account by accident. Deliberately does not affect
+  `close`: an already-open live position must always stay closeable
+  through this bridge. See `trading.py`, `SECURITY.md`, and the README's
+  "Four pillars of security" section.
 
 ### Changed
 

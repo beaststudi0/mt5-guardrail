@@ -19,6 +19,8 @@ would any other software with direct access to money.
 - A single call, or a bug/runaway loop, placing an unbounded number of
   orders or an oversized position.
 - An executed trade with no recorded justification.
+- A misconfigured or untested setup opening a new position on a live
+  account by accident (demo-only is the default; see below).
 - A browser-based cross-origin request reaching a write endpoint (see
   the CORS section below).
 
@@ -70,6 +72,7 @@ proxy's configuration as part of this bridge's security surface.
 | API key comparison | `secrets.compare_digest`, not `==` — a naive equality check leaks the correct key one byte at a time via response-time differences. |
 | Confirm tokens | `secrets.token_urlsafe(16)` — 128 bits of cryptographically secure randomness, single-use, short-lived, and bound to the exact symbol/side/volume they were minted for. |
 | Failed-auth lockout | Repeated bad `x-api-key` attempts within a short window trigger a temporary lockout (`AuthAttemptLimiter`), independent of how strong the underlying key is. |
+| Demo-only by default | `execute` refuses to open a new position unless the connected account reports MT5's own `trade_mode == 0` (demo) — `MT5_REQUIRE_DEMO_ACCOUNT=true` by default. A misconfigured `.env` pointing at a live account fails closed instead of silently trading it. `close` is deliberately exempt (see `trading.py`), so an already-open live position can never be stranded by this setting. |
 | CORS | Deliberately absent. The required `x-api-key` custom header forces a CORS preflight for any cross-origin browser request; with no origin allowlisted, that preflight fails closed. Adding a permissive CORS policy here would silently remove this protection — see the comment in `app.py`. |
 | Response headers | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Cache-Control: no-store` on every response. |
 | Error responses | The catch-all exception handler logs full tracebacks server-side but never returns internal details (stack traces, file paths, native error codes beyond what's explicitly whitelisted) to the caller. |

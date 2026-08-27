@@ -40,6 +40,24 @@ weak point.
 
 ---
 
+## Four pillars of security
+
+Four things have to hold for handing trade execution to an autonomous
+agent to be defensible at all. This is where each one actually stands in
+this codebase — reported as what's enforced today, not rounded up to
+look complete.
+
+| Pillar | Status | What's actually enforced |
+|---|---|---|
+| **Authentication** | ✅ Enforced | The shared `x-api-key` is compared with `secrets.compare_digest`, not `==` — a naive equality check leaks the correct key one byte at a time through response-time differences on a shared network. See `dependencies.py`. |
+| **Rate limiting** | ✅ Enforced | Two independent limiters: `AuthAttemptLimiter` locks out repeated bad `x-api-key` attempts (10 failures / 60s → 30s lockout, with a `Retry-After` header), and a server-side daily order ceiling caps how many orders the bridge will send in a UTC day no matter how many times it's called. The failure mode this closes specifically: an agent that hallucinates, loops, or gets stuck retrying. See `guards.py`. |
+| **Audit log** | ✅ Enforced | `execute` rejects any request missing a non-empty `reasoning.signal_source` and `reasoning.agency_reference` — a Pydantic field validator, not a convention an agent could skip. A trade with no specific, checkable justification simply cannot execute. See `models.py`. |
+| **Demo-only by default** | ✅ Enforced | `execute` refuses to open a new position unless the connected account reports MT5's own `trade_mode == 0` (demo) — a fresh clone of this project cannot accidentally trade a live account on first run. This is on top of the `preview` → `execute` token flow, which independently ensures no single call ever moves money regardless of account type. Deliberately does **not** apply to `close`: an already-open live position must always be closeable, or the safeguard would strand it in the market instead of protecting anything. Opt out with `MT5_REQUIRE_DEMO_ACCOUNT=false` only once you've independently verified your own agent's behavior — see the [Disclaimer](#disclaimer). |
+
+All four are load-bearing and covered by the test suite.
+
+---
+
 ## Architecture
 
 ```
@@ -130,6 +148,7 @@ terminal).
 | **Daily order ceiling** | A runaway loop (agent or bug) is capped, not unlimited. Resets at UTC midnight. |
 | **Max lot size** | A single order can never exceed a configured ceiling, regardless of what the agent requests. |
 | **Scale-in cooldown** | On live accounts, opening a second position on the same symbol too soon after the first is blocked for a configurable window. Demo accounts are exempt by design. |
+| **Demo-only by default** | `execute` refuses to open a new position on a non-demo account (`MT5_REQUIRE_DEMO_ACCOUNT=true`, the default) — a freshly cloned copy of this project cannot trade a live account until someone deliberately opts in. Never blocks `close`. |
 | **Mandatory reasoning** | `execute` requires `reasoning.signal_source` and `reasoning.agency_reference` — a specific, checkable decision record, not a free-text assertion that reasoning happened. |
 | **Constant-time auth + lockout** | The API key is compared with `secrets.compare_digest` (not `==`, which leaks timing information one byte at a time), and repeated failed attempts trigger a temporary lockout. |
 | **No CORS, on purpose** | The required custom `x-api-key` header forces a browser to preflight any cross-origin request. With no CORS policy allowing any origin, that preflight fails — a malicious webpage cannot make an authenticated request to your bridge even if it somehow knew the key. See the comment in `app.py` before "fixing" this by adding permissive CORS. |
