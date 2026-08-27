@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0-alpha.1] - 2026-08-28
+
 ### Added
 
 - Full automated test suite for `windows-side` covering the trading
@@ -58,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0-beta] - 2026-08-25
+## [v1.0.0-beta.1] - 2026-08-25
 
 ### Added
 
@@ -80,5 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No CORS policy configured, deliberately — the required `x-api-key` header forces a failed preflight on any cross-origin browser request. See the comment in `app.py`.
 - Swept and sanitized the codebase before publishing: no personal logic, private account numbers, internal project references, or hardcoded API keys/credentials are present in the public source.
 
-[Unreleased]: https://github.com/beaststudi0/mt5-guardrail/compare/v1.0.0-beta...HEAD
-[1.0.0-beta]: https://github.com/beaststudi0/mt5-guardrail/releases/tag/v1.0.0-beta
+[Unreleased]: https://github.com/beaststudi0/mt5-guardrail/compare/v1.1.0...HEAD
+[v1.1.0-alpha.1]: https://github.com/beaststudi0/mt5-guardrail/compare/v1.0.0-beta...v1.1.0
+[v1.0.0-beta]: https://github.com/beaststudi0/mt5-guardrail/releases/tag/v1.0.0-beta
