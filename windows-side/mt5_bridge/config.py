@@ -48,6 +48,16 @@ class Settings(BaseSettings):
     max_lot_size: float = Field(default=0.10, gt=0)
     max_daily_orders: int = Field(default=20, ge=1)
     require_confirm_token: bool = True
+    require_demo_account: bool = Field(
+        default=True,
+        description=(
+            "If true (default), execute() refuses to open a new position "
+            "unless the connected MT5 account reports trade_mode=0 (demo). "
+            "close() is never affected - see TradingService.close for why. "
+            "Set to false only after you've verified your own agent's "
+            "behavior and deliberately intend to trade a live account."
+        ),
+    )
     confirm_token_ttl: int = Field(default=60, ge=5, le=600)
     order_deviation: int = Field(default=20, ge=0)
     magic_number: int = 990011

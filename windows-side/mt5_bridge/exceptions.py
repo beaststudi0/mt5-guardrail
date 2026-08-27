@@ -85,3 +85,19 @@ class ScaleInCooldownActive(BridgeError):
         )
         self.symbol = symbol
         self.seconds_remaining = seconds_remaining
+
+
+class LiveAccountTradingBlocked(BridgeError):
+    """MT5_REQUIRE_DEMO_ACCOUNT is true (the default) and the connected
+    account is not a demo account. Raised by `execute` only - `close` is
+    never blocked by this, for the same reason it bypasses the daily
+    order limiter: a safeguard against *opening* new exposure must never
+    become a reason a position cannot be closed."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "this MT5 account is not a demo account, and MT5_REQUIRE_DEMO_ACCOUNT "
+            "is true (the default) - refusing to execute. If you have verified "
+            "your agent's behavior and intend to trade a live account, set "
+            "MT5_REQUIRE_DEMO_ACCOUNT=false in .env and restart the bridge."
+        )

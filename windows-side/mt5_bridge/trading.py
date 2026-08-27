@@ -17,7 +17,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .exceptions import InvalidStopLevels, SymbolNotAllowed, VolumeOutOfRange
+from .exceptions import (
+    InvalidStopLevels,
+    LiveAccountTradingBlocked,
+    SymbolNotAllowed,
+    VolumeOutOfRange,
+)
 from .guards import ConfirmTokenStore, OrderLimiter, ScaleInCooldownGuard, TokenPayload
 from .journal import Journal, JournalEntry
 from .models import (
@@ -48,6 +53,7 @@ class TradingService:
         confirm_token_ttl: int,
         deviation: int,
         magic_number: int,
+        require_demo_account: bool = True,
     ) -> None:
         self._terminal = terminal
         self._tokens = token_store
@@ -60,6 +66,7 @@ class TradingService:
         self._ttl = confirm_token_ttl
         self._deviation = deviation
         self._magic = magic_number
+        self._require_demo_account = require_demo_account
 
     # -- validation --------------------------------------------------------
     def _assert_symbol_allowed(self, symbol: str) -> None:
@@ -186,10 +193,20 @@ class TradingService:
         self._assert_symbol_allowed(request.symbol)
         self._assert_volume_valid(request.symbol, request.volume)
 
+        # Both checks below need to know whether this is a demo account;
+        # resolved once and reused so a live-account execute doesn't pay
+        # for account() twice, and a demo execute (the common case) skips
+        # the scale-in guard's positions() round-trip entirely.
+        is_demo = self._is_demo_account()
+
+        if self._require_demo_account and not is_demo:
+            # Checked before token redemption and quota consumption, same
+            # as symbol/volume above: a blocked attempt must not burn
+            # either. Never applies to close() - see LiveAccountTradingBlocked.
+            raise LiveAccountTradingBlocked()
+
         # Scale-in cooldown: live accounts only, demo is exempt by design.
-        # Checked lazily so a demo execute pays for neither the account()
-        # nor the positions() round-trip.
-        if not self._is_demo_account():
+        if not is_demo:
             self._scale_in_guard.check(
                 symbol=request.symbol,
                 is_demo=False,
@@ -315,6 +332,11 @@ class TradingService:
         )
 
     def close(self, ticket: int, confirm_token: str | None) -> CloseResult:
+        # No require_demo_account check here, deliberately - see
+        # LiveAccountTradingBlocked's docstring. A position on a live
+        # account must always be closeable through this bridge, even if
+        # require_demo_account is true; refusing to close it would strand
+        # an open position in the market instead of protecting anything.
         position = self._terminal.position_by_ticket(ticket)
 
         if self._require_token:

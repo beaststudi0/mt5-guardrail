@@ -93,6 +93,7 @@ def create_app(
         confirm_token_ttl=settings.confirm_token_ttl,
         deviation=settings.order_deviation,
         magic_number=settings.magic_number,
+        require_demo_account=settings.require_demo_account,
     )
 
     @asynccontextmanager
@@ -109,13 +110,22 @@ def create_app(
                 "ever being previewed first. If this wasn't intentional, set "
                 "MT5_REQUIRE_CONFIRM_TOKEN=true in .env and restart."
             )
+        if not settings.require_demo_account:
+            log.warning(
+                "⚠️  require_demo_account is FALSE - execute() can now open "
+                "new positions on a LIVE account, not just demo. If this "
+                "wasn't intentional, set MT5_REQUIRE_DEMO_ACCOUNT=true in "
+                ".env and restart."
+            )
         log.info(
-            "bridge ready on %s:%s (symbols=%s, max_lot=%s, confirm_token=%s)",
+            "bridge ready on %s:%s (symbols=%s, max_lot=%s, confirm_token=%s, "
+            "demo_only=%s)",
             settings.bridge_host,
             settings.bridge_port,
             sorted(settings.allowed_symbols),
             settings.max_lot_size,
             settings.require_confirm_token,
+            settings.require_demo_account,
         )
         yield
         resolved_terminal.shutdown()
