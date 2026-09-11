@@ -47,12 +47,38 @@ _LINUX_SIDE = Path(__file__).resolve().parents[2] / "linux-side"
 if str(_LINUX_SIDE) not in sys.path:
     sys.path.insert(0, str(_LINUX_SIDE))
 
-from mt5_client import BridgeClient, ClientConfig  # noqa: E402
-from mt5_client.exceptions import (  # noqa: E402
-    BridgeUnauthorized,
-    ConfirmTokenRejected,
-    OrderRejected as ClientOrderRejected,
+# The sibling-directory reach-above only resolves when both sides are
+# checked out together under one common repo root (e.g. a full clone, or
+# CI). It will NOT resolve in the deployment shape this project actually
+# expects in normal use: MT5 only runs on native Windows and mt5_client
+# is meant to run from WSL/Linux, so windows-side and linux-side commonly
+# live on two entirely separate machines/filesystems with no shared path
+# between them at all -- there, `_LINUX_SIDE` above points at a directory
+# that simply does not exist on this machine, which is expected, not an
+# error. `importorskip` turns that into a clean, visible skip instead of
+# an ImportError that aborts collection of every OTHER test in the run
+# (what a bare `from mt5_client import ...` here used to do).
+mt5_client = pytest.importorskip(
+    "mt5_client",
+    reason=(
+        "mt5_client (linux-side) not importable from here -- expected "
+        "when windows-side and linux-side are deployed on separate "
+        "machines (the normal case: MT5 needs native Windows, the client "
+        "is meant to run from WSL/Linux). To actually run this suite, "
+        "either check out both sides together under one repo root, or "
+        "`pip install -e ../linux-side` into this venv -- mt5_client is "
+        "pure Python (stdlib urllib, no MT5-native dependency), so "
+        "nothing stops it from being installed here purely for this "
+        "test's sake even though it isn't meant to run from Windows day "
+        "to day. See this file's module docstring for what this suite "
+        "catches that no other test file can."
+    ),
 )
+BridgeClient = mt5_client.BridgeClient
+ClientConfig = mt5_client.ClientConfig
+BridgeUnauthorized = mt5_client.BridgeUnauthorized
+ConfirmTokenRejected = mt5_client.ConfirmTokenRejected
+ClientOrderRejected = mt5_client.OrderRejected
 
 SYMBOL = "US100Cash"
 API_KEY = "e2e-test-key-at-least-16-chars"
