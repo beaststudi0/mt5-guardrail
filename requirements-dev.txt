@@ -1,0 +1,8 @@
+# Development and CI. Not needed on the trading machine.
+-r requirements.txt
+
+pytest>=8.0.0
+pytest-cov>=4.1.0
+httpx>=0.27.0            # required by fastapi.testclient
+ruff>=0.3.0              # lint + format
+mypy>=1.9.0              # static types
