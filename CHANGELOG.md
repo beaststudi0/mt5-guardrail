@@ -7,8 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-10-31
+
 ### Added
 
+- One-command installers. `install.cmd` (run once from an Administrator
+  prompt) copies the project to `C:\mt5-guardrail`, creates the virtual
+  environment, lets you choose which optional pip groups to install, and
+  creates `.env` with a generated API key; the install folder is writable
+  by Administrators/SYSTEM only. `windows-side/install.ps1` does the work,
+  `windows-side/start_bridge.cmd` starts the bridge from a normal window, and
+  `linux-side/install.sh` sets up the WSL side. A GitHub Actions workflow
+  runs both installers on clean runners. The installers show `POLICY.md`
+  (installation policy and risk acknowledgement) and require explicit
+  acceptance before installing; the acceptance is recorded locally.
+- `NOTICE` file (Apache-2.0 attribution notice for the copyright holder named in
+  `LICENSE`, plus the MetaQuotes trademark note). `LICENSE` itself is unchanged.
+- `POLICY.md` (and a Thai reading copy, `POLICY.th.md`): installation policy and risk
+  acknowledgement. It supplements, and does not restrict, the Apache License.
 - Full automated test suite for `windows-side` covering the trading
   service, guards, terminal connection handling, the HTTP API layer, and
   a real client-to-server end-to-end path — 126 tests total across both
@@ -45,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   invocation.
 - Default order comment tag changed to `mt5-guardrail` for consistency
   with the project name.
+- Package version strings (`mt5_client`, `mt5_bridge`, `pyproject.toml`) bumped from 2.0.0 to 2.1.3.
+  No change to the bridge or client behavior.
 
 ### Fixed
 

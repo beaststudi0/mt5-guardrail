@@ -1,0 +1,53 @@
+name: installer
+
+on:
+  push:
+    paths:
+      - "install.cmd"
+      - "windows-side/install.ps1"
+      - "windows-side/start_bridge.cmd"
+      - "linux-side/install.sh"
+      - "windows-side/requirements*.txt"
+      - "linux-side/requirements*.txt"
+      - ".github/workflows/installer.yml"
+  pull_request:
+    paths:
+      - "install.cmd"
+      - "windows-side/install.ps1"
+      - "windows-side/start_bridge.cmd"
+      - "linux-side/install.sh"
+      - "windows-side/requirements*.txt"
+      - "linux-side/requirements*.txt"
+      - ".github/workflows/installer.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      # CI passes --accept-policy only to exercise the installer; real users see POLICY.md and must type I ACCEPT.
+      # The runner account is already an administrator, so this exercises the
+      # install itself; the UAC prompt path cannot be tested in CI.
+      - name: install.cmd (core + dev, run tests)
+        shell: cmd
+        run: .\install.cmd C:\mt5-guardrail-ci --source "%GITHUB_WORKSPACE%" --yes --test --accept-policy
+      - name: permissions on .env
+        shell: pwsh
+        run: |
+          $acl = Get-Acl 'C:\mt5-guardrail-ci\windows-side\.env'
+          $bad = 'S-1-1-0','S-1-5-11','S-1-5-32-545'
+          foreach ($r in $acl.Access) {
+            $sid = $r.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
+            if ($bad -contains $sid) { throw "world-readable .env: $($r.IdentityReference)" }
+          }
+          if ((Get-Content -Raw 'C:\mt5-guardrail-ci\windows-side\.env') -match '(?m)^MT5_BRIDGE_API_KEY=\s*$') { throw 'API key was not generated' }
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: install.sh (dev, run tests)
+        run: bash linux-side/install.sh --yes --test --accept-policy

@@ -88,7 +88,44 @@ dependency direction between `api/ → trading → terminal → guards/journal`.
 
 ---
 
-## Quick start
+## One-command install (Windows)
+
+Open **Command Prompt as Administrator** once, go to the folder of a checkout of this repository and run:
+
+```
+install.cmd
+```
+
+Before anything is installed it shows [POLICY.md](POLICY.md) (installation policy and risk acknowledgement; Thai reading copy: [POLICY.th.md](POLICY.th.md)) and you must answer `Y` to accept (`N` or just Enter declines). For unattended installs read it first and pass `--accept-policy`.
+
+Not elevated? It asks for UAC once and carries on in the new window. It then:
+
+1. copies the project to `C:\mt5-guardrail` (or the folder you pass: `install.cmd D:\bridge`),
+2. creates `windows-side\venv` and installs the core packages,
+3. asks once which **optional extras** to add (dev tools, and the groups listed in `requirements-features.txt`),
+4. creates `windows-side\.env` from `.env.example` with a freshly generated `MT5_BRIDGE_API_KEY` (never printed).
+
+You still fill in `MT5_LOGIN`, `MT5_PASSWORD` and `MT5_SERVER` yourself - the installer never asks for or stores them - and then start the bridge from a normal window with `windows-side\start_bridge.cmd`.
+
+| Option | Meaning |
+|---|---|
+| `--dev` | also install `requirements-dev.txt` (pytest, ruff, mypy) |
+| `--features 1,3` / `all` / `none` | pick optional groups without the menu |
+| `--test` | run the test suite afterwards (implies `--dev`) |
+| `--wsl` | also run `linux-side/install.sh` inside WSL |
+| `--accept-policy` | I have read `POLICY.md` and accept it (unattended installs) |
+| `--yes` | never ask about extras (the policy is still required) |
+| `--allow-sdist` | let pip build source packages (default: prebuilt wheels only) |
+| `--force` | recreate the virtual environment |
+| `--ref NAME` / `--source PATH` | download another tag/branch, or use a local clone/zip |
+
+**Permissions.** Everything runs as Administrator, so the install folder is writable by Administrators and SYSTEM only. Your own user may read and run it, and may edit only `windows-side\.env` and write to `windows-side\data\` (journal and log). The bridge itself does not need Administrator rights. The installer does not change firewall rules, PATH, the registry, or PowerShell's execution policy, and it does not touch any guardrail setting (demo-only, confirm token, lot and order ceilings).
+
+**WSL side.** `linux-side/install.sh` checks Python and the client, and can create `linux-side/.venv` for dev tools or extras. Copy `MT5_BRIDGE_API_KEY` from the Windows `.env` into your shell yourself.
+
+*Maintainers:* `install.cmd` downloads a **pinned commit** (the `PinCommit` value at the top of its PowerShell part), not `main`. Set it in a separate commit right after the installer commit and do not squash-merge that pair, or the SHA changes.
+
+## Quick start (manual install)
 
 ### 1. Windows side (where MT5 runs)
 

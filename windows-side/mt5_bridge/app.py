@@ -133,7 +133,7 @@ def create_app(
 
     app = FastAPI(
         title="MT5 Trading Bridge",
-        version="2.0.0",
+        version="2.1.3",
         summary="Guarded REST access to a MetaTrader 5 terminal.",
         lifespan=lifespan,
     )
