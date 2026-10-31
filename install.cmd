@@ -26,8 +26,8 @@ Set-StrictMode -Version 2.0
 
 $script:RepoName   = 'beaststudi0/mt5-guardrail'
 # 40-hex commit the installer downloads when nothing else is given. Empty in the
-# commit that adds this file; a follow-up commit (never squashed) sets it.
-$script:PinCommit  = ''
+# commit that adds this file (Patch 2.1.3 installer); the follow-up commit (never squashed) sets it.
+$script:PinCommit  = '5bf37b98652b2874ab70e1443458f3ed19d3d80f'
 $script:DefaultDir = 'C:\mt5-guardrail'
 $script:SafeToken  = '^[A-Za-z0-9 ._:\\=,-]*$'
 $script:PolicyVersion = '2026-10-31'
