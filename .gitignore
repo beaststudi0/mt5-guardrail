@@ -81,3 +81,13 @@ cover/
 *.swp
 .DS_Store
 Thumbs.db
+
+# --- Keys, certificates and per-machine data (never track) -------------------
+*.sqlite3
+*.pem
+*.key
+.mt5_env
+.install-selection.txt
+windows-side/data/
+.policy-accepted
+.policy-accepted.txt

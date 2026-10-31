@@ -1,0 +1,9 @@
+# Installer files need exact line endings. cmd.exe misparses LF-only batch files and bash cannot run a script
+# with CRLF line endings. -text = store the bytes exactly as committed (CRLF), so that downloading the single
+# file from GitHub (raw view or Download) gives a working script, not only a checkout/zip.
+install.cmd                    -text
+windows-side/install.ps1       -text
+windows-side/start_bridge.cmd  -text
+linux-side/install.sh          text eol=lf
+POLICY.md                      text eol=lf
+POLICY.th.md                   text eol=lf
